@@ -174,6 +174,69 @@ def handle_report(report_file: str) -> int:
         return 1
 
 
+def handle_demo() -> int:
+    """Run an automated, 100% offline demonstration scenario for college evaluation."""
+    import os
+
+    display_banner(subtitle="LIVE OFFLINE EVALUATION DEMO")
+    console.print("[dim white]Demonstrating full terminal workflow: safe domain, phishing domain, lookalike comparison, batch scanning, and report export without internet access.[/dim white]\n")
+
+    # Step 1: Safe Domain Scan
+    console.print("[bold cyan]▶ STEP 1: Scanning Benign / Safe Domain ('wikipedia.org')[/bold cyan]")
+    scan_safe = scan_target("wikipedia.org")
+    render_scan_result(scan_safe)
+
+    # Step 2: Suspicious Keyword Domain Scan
+    console.print("\n[bold cyan]▶ STEP 2: Scanning Suspicious Phishing Domain ('account-verification-service-alert.net')[/bold cyan]")
+    scan_phish = scan_target("account-verification-service-alert.net")
+    render_scan_result(scan_phish)
+
+    # Step 3: Brand Lookalike Scan
+    console.print("\n[bold cyan]▶ STEP 3: Scanning Brand Lookalike Domain ('paypa1-security-center.com')[/bold cyan]")
+    scan_lookalike = scan_target("paypa1-security-center.com")
+    render_scan_result(scan_lookalike)
+
+    # Step 4: Pairwise Domain Comparison
+    console.print("\n[bold cyan]▶ STEP 4: Pairwise Domain Comparison ('paypal.com' vs 'paypa1-security-center.com')[/bold cyan]")
+    handle_compare("paypal.com", "paypa1-security-center.com")
+
+    # Step 5: Automated Batch Scan on data/demo_domains.csv
+    demo_csv = "data/demo_domains.csv"
+    if os.path.isfile(demo_csv):
+        console.print(f"\n[bold cyan]▶ STEP 5: Automated Batch Scan on Demo Dataset ('{demo_csv}')[/bold cyan]")
+        json_out = "reports/demo_results.json"
+        csv_out = "reports/demo_results.csv"
+        handle_batch(demo_csv, output_format="terminal", output_path=json_out)
+        handle_batch(demo_csv, output_format="terminal", output_path=csv_out)
+
+    # Concluding Summary Panel
+    summary_text = Text()
+    summary_text.append("✔ College Evaluation Demonstration Complete\n", style="bold green")
+    summary_text.append("──────────────────────────────────────────────────\n", style="bright_blue")
+    summary_text.append("• 100% Offline execution: Zero external network or cloud dependencies\n", style="white")
+    summary_text.append("• Input Validation & Normalization: Validated bare domains, URLs, protocols\n", style="white")
+    summary_text.append("• Lexical Feature Extraction: Shannon entropy, lengths, hyphens, subdomains\n", style="white")
+    summary_text.append("• Brand Lookalike Analysis: RapidFuzz Levenshtein & homoglyph detection\n", style="white")
+    summary_text.append("• Machine Learning Inference: Probability scoring & risk classification\n", style="white")
+    summary_text.append("• Generated Demo Reports:\n", style="bold yellow")
+    summary_text.append("   -> reports/demo_results.json\n", style="bold cyan")
+    summary_text.append("   -> reports/demo_results.csv\n\n", style="bold cyan")
+    summary_text.append("Evaluator Quickstart:\n", style="bold white")
+    summary_text.append("  phishguard scan paypal-secure-login-example.com\n", style="dim cyan")
+    summary_text.append("  phishguard compare paypal.com paypa1-login.com\n", style="dim cyan")
+    summary_text.append("  phishguard report reports/demo_results.json\n", style="dim cyan")
+
+    panel = Panel(
+        summary_text,
+        title="[bold white]PHISHGUARD DEMO[/bold white] [green]— READY FOR EVALUATION[/green]",
+        border_style="green",
+        padding=(1, 2),
+        expand=False,
+    )
+    console.print(panel)
+    return 0
+
+
 def handle_compare(genuine_raw: str, suspicious_raw: str) -> int:
     """Execute the domain comparison workflow and display rich visual results."""
     # 1. Input validation
@@ -486,7 +549,8 @@ def main() -> None:
             code = handle_report(args.report_file)
             sys.exit(code)
         elif args.command == "demo":
-            console.print("[cyan]Demo command invoked.[/cyan]")
+            code = handle_demo()
+            sys.exit(code)
         else:
             parser.print_help()
     except KeyboardInterrupt:

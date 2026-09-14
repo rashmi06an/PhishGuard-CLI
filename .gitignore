@@ -6,3 +6,5 @@ venv/
 .DS_Store
 .ipynb_checkpoints/
 *.log
+*.egg-info/
+.pytest_cache/

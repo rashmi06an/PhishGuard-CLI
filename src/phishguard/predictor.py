@@ -41,17 +41,12 @@ def load_model_artifact(model_path: str = DEFAULT_MODEL_PATH) -> Dict[str, Any]:
 
     Raises ModelNotFoundError if the model file is not found.
     """
-    import warnings
-
     if not os.path.isfile(model_path):
         raise ModelNotFoundError(
             f"Model not found at '{model_path}'. "
             f"Please run 'phishguard train' first to train the detection model."
         )
-
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore")
-        return joblib.load(model_path)
+    return joblib.load(model_path)
 
 
 def train_model(

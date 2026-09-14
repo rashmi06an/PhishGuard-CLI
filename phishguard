@@ -1,4 +1,15 @@
 #!/usr/bin/env bash
+# PhishGuard-CLI launcher — automatically resolves the correct Python interpreter
+# Priority: .venv in project root → system python3 (fallback)
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+if [ -f "$DIR/.venv/bin/python3" ]; then
+    PYTHON="$DIR/.venv/bin/python3"
+elif [ -f "$DIR/.venv/bin/python" ]; then
+    PYTHON="$DIR/.venv/bin/python"
+else
+    PYTHON="python3"
+fi
+
 export PYTHONPATH="$DIR/src:$PYTHONPATH"
-exec python3 -m phishguard.cli "$@"
+exec "$PYTHON" -m phishguard.cli "$@"

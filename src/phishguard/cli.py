@@ -4,6 +4,7 @@ import argparse
 import sys
 from typing import Optional
 
+from rich import box
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
@@ -12,8 +13,11 @@ from rich.text import Text
 from phishguard import __app_name__, __version__
 from phishguard.predictor import ModelNotFoundError, train_model
 from phishguard.reporter import (
+    create_meter,
     export_to_csv,
     export_to_json,
+    get_risk_badge,
+    get_verdict_badge,
     inspect_report_file,
     render_batch_table,
     render_scan_result,
@@ -49,7 +53,7 @@ def handle_scan(
     if output_format == "json":
         console.print_json(data=scan_res.to_dict())
     elif output_format == "csv":
-        console.print(f"domain,classification,probability,risk_level")
+        console.print("domain,classification,probability,risk_level")
         console.print(
             f"{scan_res.target},{scan_res.classification},"
             f"{scan_res.phishing_probability:.4f},{scan_res.risk_level}"
@@ -109,12 +113,12 @@ def handle_batch(
         print_error(f"CSV file '{csv_path}' contains no valid domain entries.", suggestion="Add at least one domain to scan.")
         return 1
 
-    console.print(f"[cyan]Initiating batch scan for [bold white]{len(raw_domains)}[/bold white] targets from:[/cyan] [bold]{csv_path}[/bold]\n")
+    console.print(f"\n[bold cyan]▶ Initiating Batch Scan:[/] [bold white]{len(raw_domains)}[/] targets from [dim cyan]{csv_path}[/]\n")
 
-    results: List[Any] = []
+    results = []
     failed_count = 0
 
-    with console.status("[bold green]Scanning targets...[/bold green]"):
+    with console.status("[bold green]Evaluating target domains...[/bold green]"):
         for target in raw_domains:
             try:
                 res = scan_target(target)
@@ -137,18 +141,33 @@ def handle_batch(
     else:
         render_batch_table(results)
 
-    # Summary statistics
+    # Summary Panel
     safe_cnt = sum(1 for r in results if r.classification == "SAFE")
     susp_cnt = sum(1 for r in results if r.classification == "SUSPICIOUS")
     phish_cnt = sum(1 for r in results if r.classification == "PHISHING")
 
-    console.print(
-        f"\n[bold white]Batch Summary:[/bold white] "
-        f"[green]Safe: {safe_cnt}[/green] | "
-        f"[yellow]Suspicious: {susp_cnt}[/yellow] | "
-        f"[red]Phishing: {phish_cnt}[/red] "
-        f"(Total Evaluated: {len(results)})"
+    summary_grid = Table.grid(expand=True, padding=(0, 2))
+    summary_grid.add_column(justify="center")
+    summary_grid.add_column(justify="center")
+    summary_grid.add_column(justify="center")
+    summary_grid.add_column(justify="center")
+
+    summary_grid.add_row(
+        f"[bold white]Total Evaluated:[/] [bold cyan]{len(results)}[/]",
+        f"[bold white]Safe:[/] [bold green]{safe_cnt}[/]",
+        f"[bold white]Suspicious:[/] [bold yellow]{susp_cnt}[/]",
+        f"[bold white]Phishing:[/] [bold red]{phish_cnt}[/]",
     )
+
+    summary_panel = Panel(
+        summary_grid,
+        title="[bold white]BATCH SCAN SUMMARY[/bold white]",
+        border_style="bright_blue",
+        box=box.ROUNDED,
+        padding=(0, 1),
+        expand=False,
+    )
+    console.print(summary_panel)
 
     # File export
     if output_path:
@@ -178,63 +197,83 @@ def handle_demo() -> int:
     """Run an automated, 100% offline demonstration scenario for college evaluation."""
     import os
 
-    display_banner(subtitle="LIVE OFFLINE EVALUATION DEMO")
-    console.print("[dim white]Demonstrating full terminal workflow: safe domain, phishing domain, lookalike comparison, batch scanning, and report export without internet access.[/dim white]\n")
+    display_banner(subtitle="OFFLINE COLLEGE EVALUATION DEMO")
+    console.print(
+        "[dim white]Executing automated evaluation: benign domain, suspicious phishing keywords, "
+        "homoglyph lookalikes, domain pairwise comparison, batch processing, and report exports.[/dim white]\n"
+    )
 
     # Step 1: Safe Domain Scan
-    console.print("[bold cyan]▶ STEP 1: Scanning Benign / Safe Domain ('wikipedia.org')[/bold cyan]")
+    console.print("[bold cyan]╭─ ▶ STEP 1/5: Benign / Safe Domain Scan ─────────────────────────╮[/bold cyan]")
+    console.print("[bold cyan]│[/bold cyan] Target: [bold green]wikipedia.org[/bold green]")
+    console.print("[bold cyan]╰─────────────────────────────────────────────────────────────────╯[/bold cyan]")
     scan_safe = scan_target("wikipedia.org")
     render_scan_result(scan_safe)
 
     # Step 2: Suspicious Keyword Domain Scan
-    console.print("\n[bold cyan]▶ STEP 2: Scanning Suspicious Phishing Domain ('account-verification-service-alert.net')[/bold cyan]")
+    console.print("\n[bold cyan]╭─ ▶ STEP 2/5: Phishing Keyword & Structural Anomaly Scan ────────╮[/bold cyan]")
+    console.print("[bold cyan]│[/bold cyan] Target: [bold red]account-verification-service-alert.net[/bold red]")
+    console.print("[bold cyan]╰─────────────────────────────────────────────────────────────────╯[/bold cyan]")
     scan_phish = scan_target("account-verification-service-alert.net")
     render_scan_result(scan_phish)
 
     # Step 3: Brand Lookalike Scan
-    console.print("\n[bold cyan]▶ STEP 3: Scanning Brand Lookalike Domain ('paypa1-security-center.com')[/bold cyan]")
+    console.print("\n[bold cyan]╭─ ▶ STEP 3/5: Visual Lookalike & Homoglyph Substitution Scan ─────╮[/bold cyan]")
+    console.print("[bold cyan]│[/bold cyan] Target: [bold yellow]paypa1-security-center.com[/bold yellow]")
+    console.print("[bold cyan]╰─────────────────────────────────────────────────────────────────╯[/bold cyan]")
     scan_lookalike = scan_target("paypa1-security-center.com")
     render_scan_result(scan_lookalike)
 
     # Step 4: Pairwise Domain Comparison
-    console.print("\n[bold cyan]▶ STEP 4: Pairwise Domain Comparison ('paypal.com' vs 'paypa1-security-center.com')[/bold cyan]")
+    console.print("\n[bold cyan]╭─ ▶ STEP 4/5: Pairwise Brand Lookalike Comparison ───────────────╮[/bold cyan]")
+    console.print("[bold cyan]│[/bold cyan] Comparing: [bold green]paypal.com[/bold green] vs [bold red]paypa1-security-center.com[/bold red]")
+    console.print("[bold cyan]╰─────────────────────────────────────────────────────────────────╯[/bold cyan]")
     handle_compare("paypal.com", "paypa1-security-center.com")
 
     # Step 5: Automated Batch Scan on data/demo_domains.csv
     demo_csv = "data/demo_domains.csv"
     if os.path.isfile(demo_csv):
-        console.print(f"\n[bold cyan]▶ STEP 5: Automated Batch Scan on Demo Dataset ('{demo_csv}')[/bold cyan]")
+        console.print(f"\n[bold cyan]╭─ ▶ STEP 5/5: Automated Batch Processing & Report Generation ───╮[/bold cyan]")
+        console.print(f"[bold cyan]│[/bold cyan] Batch Source: [bold white]{demo_csv}[/bold white]")
+        console.print("[bold cyan]╰─────────────────────────────────────────────────────────────────╯[/bold cyan]")
         json_out = "reports/demo_results.json"
         csv_out = "reports/demo_results.csv"
         handle_batch(demo_csv, output_format="terminal", output_path=json_out)
-        handle_batch(demo_csv, output_format="terminal", output_path=csv_out)
+        export_to_csv(scan_target_batch(demo_csv), csv_out)
 
     # Concluding Summary Panel
     summary_text = Text()
-    summary_text.append("✔ College Evaluation Demonstration Complete\n", style="bold green")
-    summary_text.append("──────────────────────────────────────────────────\n", style="bright_blue")
-    summary_text.append("• 100% Offline execution: Zero external network or cloud dependencies\n", style="white")
-    summary_text.append("• Input Validation & Normalization: Validated bare domains, URLs, protocols\n", style="white")
-    summary_text.append("• Lexical Feature Extraction: Shannon entropy, lengths, hyphens, subdomains\n", style="white")
-    summary_text.append("• Brand Lookalike Analysis: RapidFuzz Levenshtein & homoglyph detection\n", style="white")
-    summary_text.append("• Machine Learning Inference: Probability scoring & risk classification\n", style="white")
-    summary_text.append("• Generated Demo Reports:\n", style="bold yellow")
-    summary_text.append("   -> reports/demo_results.json\n", style="bold cyan")
-    summary_text.append("   -> reports/demo_results.csv\n\n", style="bold cyan")
-    summary_text.append("Evaluator Quickstart:\n", style="bold white")
-    summary_text.append("  phishguard scan paypal-secure-login-example.com\n", style="dim cyan")
-    summary_text.append("  phishguard compare paypal.com paypa1-login.com\n", style="dim cyan")
-    summary_text.append("  phishguard report reports/demo_results.json\n", style="dim cyan")
+    summary_text.append("✔ College Evaluation Demonstration Completed Successfully\n", style="bold green")
+    summary_text.append("─" * 62 + "\n", style="bright_blue")
+    summary_text.append(" [✔] 100% Offline Core  : Zero external network or cloud dependencies\n", style="white")
+    summary_text.append(" [✔] Input Normalization: RFC-validated bare domains, URLs, protocols & IPs\n", style="white")
+    summary_text.append(" [✔] Lexical Extraction : Shannon entropy, lengths, hyphens, subdomains\n", style="white")
+    summary_text.append(" [✔] Brand Lookalikes   : RapidFuzz Levenshtein & homoglyph translation\n", style="white")
+    summary_text.append(" [✔] ML Inference Engine: Random Forest probability & risk classification\n", style="white")
+    summary_text.append(" [✔] Generated Reports  : reports/demo_results.json & reports/demo_results.csv\n\n", style="white")
+    summary_text.append("Evaluator Quickstart Commands:\n", style="bold cyan")
+    summary_text.append("  ./phishguard scan paypal-security-update.com\n", style="bold white")
+    summary_text.append("  ./phishguard compare paypal.com paypa1-login.com\n", style="bold white")
+    summary_text.append("  ./phishguard report reports/demo_results.json\n", style="bold white")
 
     panel = Panel(
         summary_text,
-        title="[bold white]PHISHGUARD DEMO[/bold white] [green]— READY FOR EVALUATION[/green]",
+        title="[bold white]🛡️  PHISHGUARD DEMO[/bold white] [green]• READY FOR EVALUATION[/green]",
         border_style="green",
+        box=box.ROUNDED,
         padding=(1, 2),
         expand=False,
     )
     console.print(panel)
     return 0
+
+
+def scan_target_batch(csv_path: str):
+    """Helper to scan domains from CSV for reports."""
+    import pandas as pd
+    df = pd.read_csv(csv_path, comment="#")
+    domains = df["domain"].dropna().astype(str).str.strip().tolist()
+    return [scan_target(d) for d in domains if d]
 
 
 def handle_compare(genuine_raw: str, suspicious_raw: str) -> int:
@@ -255,42 +294,74 @@ def handle_compare(genuine_raw: str, suspicious_raw: str) -> int:
     # 2. Perform comparison
     result = compare_two_domains(gen_info.original_input, susp_info.original_input)
 
-    # 3. Format terminal output
-    content = Text()
-    content.append("GENUINE DOMAIN:\n", style="bold cyan")
-    content.append(f"{gen_info.registered_domain or gen_info.hostname}\n\n", style="white")
+    # 3. Build comparison layout
+    card = Table(show_header=False, show_edge=False, box=None, expand=True, padding=(0, 0))
 
-    content.append("SUSPICIOUS TARGET:\n", style="bold magenta")
-    content.append(f"{susp_info.registered_domain or susp_info.hostname}\n\n", style="white")
+    # Domain identity overview (fits long domain names without truncation)
+    comp_table = Table(box=box.ROUNDED, border_style="bright_blue", expand=True)
+    comp_table.add_column("DOMAIN IDENTITY", style="bold cyan", width=18)
+    comp_table.add_column("REGISTERED DOMAIN & DETAILS", style="white")
 
-    content.append("SIMILARITY SCORE:\n", style="bold yellow")
-    content.append(f"{result.similarity_score:.1f}% ", style="bold white")
-    content.append("(normalized visual / lookalike score)\n\n", style="dim italic white")
+    comp_table.add_row(
+        "✔ Genuine Brand",
+        f"[bold green]{gen_info.registered_domain or gen_info.hostname}[/bold green]  "
+        f"[dim](Extracted Base: '{gen_info.domain or gen_info.hostname}')[/dim]",
+    )
+    comp_table.add_row(
+        "✖ Evaluated Target",
+        f"[bold red]{susp_info.registered_domain or susp_info.hostname}[/bold red]  "
+        f"[dim](Extracted Base: '{susp_info.domain or susp_info.hostname}')[/dim]",
+    )
 
-    content.append("DETECTED SIGNALS:\n", style="bold cyan")
-    if result.signals:
-        for sig in result.signals:
-            content.append(f" • {sig}\n", style="yellow")
-    else:
-        content.append(" • No significant lookalike patterns detected\n", style="dim")
-    content.append("\n")
+    card.add_row(comp_table)
 
-    content.append("VERDICT:\n", style="bold white")
+    # Lookalike Assessment Bar
+    assessment_table = Table(box=box.ROUNDED, border_style="dim blue", expand=True)
+    assessment_table.add_column("Score & Meter", justify="center")
+    assessment_table.add_column("Verdict", justify="center")
+
+    norm_prob = result.similarity_score / 100.0
+    meter_view = create_meter(norm_prob, width=14)
+
+    verdict_badge = Text()
     if "HIGH" in result.verdict:
-        verdict_style = "bold red"
+        verdict_badge.append(" HIGH LOOKALIKE RISK ", style="bold white on red")
     elif "SUSPICIOUS" in result.verdict:
-        verdict_style = "bold yellow"
+        verdict_badge.append(" SUSPICIOUS LOOKALIKE ", style="bold black on yellow")
     elif "IDENTICAL" in result.verdict:
-        verdict_style = "bold green"
+        verdict_badge.append(" IDENTICAL / GENUINE ", style="bold white on green")
     else:
-        verdict_style = "bold cyan"
+        verdict_badge.append(f" {result.verdict} ", style="bold white on dark_green")
 
-    content.append(f"{result.verdict}\n", style=verdict_style)
+    score_line = Text()
+    score_line.append("Visual Lookalike Score: ", style="bold white")
+    score_line.append_text(meter_view)
+
+    verdict_line = Text()
+    verdict_line.append("Assessment: ", style="bold white")
+    verdict_line.append_text(verdict_badge)
+
+    assessment_table.add_row(score_line, verdict_line)
+    card.add_row(assessment_table)
+
+    # Signals breakdown
+    signals_box = Table(show_header=False, box=box.SIMPLE, expand=True, border_style="dim blue")
+    signals_box.add_column("signals")
+    signals_box.add_row(Text("🔎 Typosquatting & Structural Analysis Findings:", style="bold cyan"))
+    if result.signals:
+        for s in result.signals:
+            signals_box.add_row(Text(f"   • {s}", style="bright_yellow"))
+    else:
+        signals_box.add_row(Text("   • No typosquatting patterns detected between targets.", style="dim green"))
+
+    card.add_row(signals_box)
 
     panel = Panel(
-        content,
-        title="[bold white]PHISHGUARD[/bold white] [cyan]— LOOKALIKE DOMAIN COMPARATOR[/cyan]",
+        card,
+        title="[bold white]🛡️  PHISHGUARD[/bold white] [cyan]• LOOKALIKE DOMAIN COMPARATOR[/cyan]",
+        subtitle=f"[dim cyan]{gen_info.registered_domain} vs {susp_info.registered_domain}[/dim cyan]",
         border_style="bright_blue",
+        box=box.ROUNDED,
         padding=(1, 2),
         expand=False,
     )
@@ -299,9 +370,10 @@ def handle_compare(genuine_raw: str, suspicious_raw: str) -> int:
 
 
 def handle_train(dataset_path: str, model_type: str, output_model: str) -> int:
-    """Execute model training and print evaluation metrics."""
-    console.print(f"[cyan]Loading dataset from:[/cyan] [bold white]{dataset_path}[/bold white]")
-    console.print(f"[cyan]Classifier algorithm:[/cyan] [bold yellow]{model_type.replace('_', ' ').title()}[/bold yellow]")
+    """Execute model training and print evaluation metrics in a rich card."""
+    console.print(f"\n[bold cyan]▶ Initializing ML Training Pipeline[/bold cyan]")
+    console.print(f"  • Dataset Source   : [bold white]{dataset_path}[/bold white]")
+    console.print(f"  • Model Algorithm  : [bold yellow]{model_type.replace('_', ' ').title()}[/bold yellow]")
 
     with console.status("[bold green]Extracting features & training model...[/bold green]"):
         try:
@@ -314,24 +386,46 @@ def handle_train(dataset_path: str, model_type: str, output_model: str) -> int:
             print_error(f"Training failed: {exc}", suggestion="Verify dataset path and column format ('url', 'label')")
             return 1
 
-    content = Text()
-    content.append("Model Training Complete\n", style="bold green")
-    content.append("──────────────────────────────────────────\n", style="bright_blue")
-    content.append(f"Dataset Samples: {metrics['dataset_samples']} URLs\n", style="white")
-    content.append(f"Train / Test Split: {metrics['train_samples']} / {metrics['test_samples']}\n\n", style="dim white")
+    card = Table(show_header=False, show_edge=False, box=None, expand=True, padding=(0, 0))
 
-    content.append(f"Accuracy : {metrics['accuracy']:.1f}%\n", style="bold white")
-    content.append(f"Precision: {metrics['precision']:.1f}%\n", style="bold white")
-    content.append(f"Recall   : {metrics['recall']:.1f}%\n", style="bold white")
-    content.append(f"F1 Score : {metrics['f1_score']:.1f}%\n\n", style="bold white")
+    # Dataset & Partition info
+    info_table = Table(box=box.SIMPLE, show_header=False, expand=True)
+    info_table.add_column("label", style="bold cyan", width=22)
+    info_table.add_column("val", style="white")
+    info_table.add_row("Training Samples", f"[bold white]{metrics['dataset_samples']}[/bold white] URLs from public dataset")
+    info_table.add_row("Train / Test Partition", f"[bold white]{metrics['train_samples']}[/bold white] train / [bold white]{metrics['test_samples']}[/bold white] test (80/20 stratified)")
+    card.add_row(info_table)
 
-    content.append("✔ Model saved successfully to: ", style="cyan")
-    content.append(f"{output_model}\n", style="bold green")
+    card.add_row(Text("─" * 68, style="dim blue"))
+
+    # Evaluation Metrics Table
+    met_table = Table(box=box.ROUNDED, border_style="bright_blue", expand=True)
+    met_table.add_column("EVALUATION METRIC", style="bold white", width=24)
+    met_table.add_column("SCORE", justify="center", width=12)
+    met_table.add_column("PERFORMANCE RATING", justify="left", min_width=25)
+
+    def metric_bar(val: float) -> Text:
+        pct = max(0.0, min(100.0, val))
+        bar_len = int(round(pct / 100.0 * 16))
+        txt = Text()
+        txt.append("█" * bar_len, style="bold bright_green")
+        txt.append("░" * (16 - bar_len), style="dim white")
+        txt.append(f" ({'Optimal' if pct >= 95 else 'Good'})", style="dim green")
+        return txt
+
+    met_table.add_row("Classification Accuracy", f"[bold green]{metrics['accuracy']:.1f}%[/bold green]", metric_bar(metrics['accuracy']))
+    met_table.add_row("Precision", f"[bold green]{metrics['precision']:.1f}%[/bold green]", metric_bar(metrics['precision']))
+    met_table.add_row("Recall (Detection Rate)", f"[bold green]{metrics['recall']:.1f}%[/bold green]", metric_bar(metrics['recall']))
+    met_table.add_row("F1-Score (Harmonic Mean)", f"[bold green]{metrics['f1_score']:.1f}%[/bold green]", metric_bar(metrics['f1_score']))
+
+    card.add_row(met_table)
+    card.add_row(Text(f"✔ Serialized model artifact saved to: {output_model}", style="bold green"))
 
     panel = Panel(
-        content,
-        title="[bold white]PHISHGUARD[/bold white] [cyan]— MACHINE LEARNING PIPELINE[/cyan]",
+        card,
+        title="[bold white]🛡️  PHISHGUARD[/bold white] [cyan]• MACHINE LEARNING MODEL PIPELINE[/cyan]",
         border_style="bright_blue",
+        box=box.ROUNDED,
         padding=(1, 2),
         expand=False,
     )
@@ -341,20 +435,26 @@ def handle_train(dataset_path: str, model_type: str, output_model: str) -> int:
 
 def display_banner(subtitle: Optional[str] = None) -> None:
     """Render a clean, cybersecurity-styled CLI header banner."""
-    header_text = Text()
-    header_text.append("🛡️  ", style="bold cyan")
-    header_text.append(__app_name__.upper(), style="bold white")
-    header_text.append(f" [v{__version__}]\n", style="cyan")
-    header_text.append(
-        "Intelligent Phishing Domain & Lookalike Detection Utility",
-        style="dim white",
-    )
+    header_table = Table(show_header=False, show_edge=False, box=None, expand=True)
+
+    top_line = Text()
+    top_line.append("🛡️  PHISHGUARD-CLI", style="bold bright_cyan")
+    top_line.append(f"  v{__version__}", style="dim cyan")
+    top_line.append("   [ 100% OFFLINE THREAT ENGINE ]", style="bold green")
+
+    desc_line = Text("Intelligent Phishing Domain, Lookalike & Typosquatting Analyzer", style="dim white")
+
+    header_table.add_row(top_line)
+    header_table.add_row(desc_line)
+
     if subtitle:
-        header_text.append(f"\n{subtitle}", style="bold yellow")
+        sub_text = Text(f"▶ {subtitle}", style="bold yellow")
+        header_table.add_row(sub_text)
 
     panel = Panel(
-        header_text,
+        header_table,
         border_style="bright_blue",
+        box=box.ROUNDED,
         expand=False,
         padding=(0, 2),
     )
@@ -364,17 +464,19 @@ def display_banner(subtitle: Optional[str] = None) -> None:
 def print_error(message: str, suggestion: Optional[str] = None) -> None:
     """Print a clean, user-friendly error box without a Python traceback."""
     err_text = Text()
-    err_text.append("✖ [ERROR] ", style="bold red")
-    err_text.append(message, style="white")
+    err_text.append("✖ ", style="bold red")
+    err_text.append(message, style="bold white")
     if suggestion:
         err_text.append(f"\n💡 Hint: {suggestion}", style="yellow")
 
     error_panel = Panel(
         err_text,
         border_style="red",
-        title="Command Error",
+        box=box.ROUNDED,
+        title="[bold red]ERROR[/bold red]",
         title_align="left",
         expand=False,
+        padding=(0, 2),
     )
     error_console.print(error_panel)
 

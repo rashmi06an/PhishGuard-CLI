@@ -1,0 +1,310 @@
+[
+  {
+    "target": "google.com",
+    "hostname": "google.com",
+    "registered_domain": "google.com",
+    "classification": "SAFE",
+    "phishing_probability": 0.0,
+    "phishing_percentage": "0.0%",
+    "risk_level": "LOW",
+    "signals": [],
+    "brand_lookalike": {
+      "matched_brand": "google",
+      "similarity_score": 100.0,
+      "is_lookalike": false,
+      "verdict": "EXACT MATCH (GENUINE BRAND)"
+    },
+    "features": {
+      "url_length": 17,
+      "domain_length": 10,
+      "num_dots": 1,
+      "num_hyphens": 0,
+      "num_digits": 0,
+      "num_special_chars": 3,
+      "num_subdomains": 0,
+      "has_ip": 0,
+      "entropy": 2.6464,
+      "suspicious_keyword_count": 0
+    }
+  },
+  {
+    "target": "wikipedia.org",
+    "hostname": "wikipedia.org",
+    "registered_domain": "wikipedia.org",
+    "classification": "SAFE",
+    "phishing_probability": 0.0,
+    "phishing_percentage": "0.0%",
+    "risk_level": "LOW",
+    "signals": [],
+    "brand_lookalike": {
+      "matched_brand": "linkedin",
+      "similarity_score": 58.8,
+      "is_lookalike": false,
+      "verdict": "NO LOOKALIKE RISK"
+    },
+    "features": {
+      "url_length": 20,
+      "domain_length": 13,
+      "num_dots": 1,
+      "num_hyphens": 0,
+      "num_digits": 0,
+      "num_special_chars": 3,
+      "num_subdomains": 0,
+      "has_ip": 0,
+      "entropy": 3.3347,
+      "suspicious_keyword_count": 0
+    }
+  },
+  {
+    "target": "paypal.com",
+    "hostname": "paypal.com",
+    "registered_domain": "paypal.com",
+    "classification": "SAFE",
+    "phishing_probability": 0.0,
+    "phishing_percentage": "0.0%",
+    "risk_level": "LOW",
+    "signals": [],
+    "brand_lookalike": {
+      "matched_brand": "paypal",
+      "similarity_score": 100.0,
+      "is_lookalike": false,
+      "verdict": "EXACT MATCH (GENUINE BRAND)"
+    },
+    "features": {
+      "url_length": 17,
+      "domain_length": 10,
+      "num_dots": 1,
+      "num_hyphens": 0,
+      "num_digits": 0,
+      "num_special_chars": 3,
+      "num_subdomains": 0,
+      "has_ip": 0,
+      "entropy": 2.9219,
+      "suspicious_keyword_count": 0
+    }
+  },
+  {
+    "target": "github.com",
+    "hostname": "github.com",
+    "registered_domain": "github.com",
+    "classification": "SAFE",
+    "phishing_probability": 0.0,
+    "phishing_percentage": "0.0%",
+    "risk_level": "LOW",
+    "signals": [],
+    "brand_lookalike": {
+      "matched_brand": "github",
+      "similarity_score": 100.0,
+      "is_lookalike": false,
+      "verdict": "EXACT MATCH (GENUINE BRAND)"
+    },
+    "features": {
+      "url_length": 17,
+      "domain_length": 10,
+      "num_dots": 1,
+      "num_hyphens": 0,
+      "num_digits": 0,
+      "num_special_chars": 3,
+      "num_subdomains": 0,
+      "has_ip": 0,
+      "entropy": 3.3219,
+      "suspicious_keyword_count": 0
+    }
+  },
+  {
+    "target": "account-verification-service-alert.net",
+    "hostname": "account-verification-service-alert.net",
+    "registered_domain": "account-verification-service-alert.net",
+    "classification": "PHISHING",
+    "phishing_probability": 1.0,
+    "phishing_percentage": "100.0%",
+    "risk_level": "CRITICAL",
+    "signals": [
+      "[HIGH] Contains suspicious phishing keyword(s): 'verification', 'account', 'service'",
+      "[MEDIUM] Multiple hyphens in domain (3)",
+      "[LOW] Abnormally long domain name (38 chars)"
+    ],
+    "brand_lookalike": {
+      "matched_brand": "apple",
+      "similarity_score": 60.0,
+      "is_lookalike": false,
+      "verdict": "NO LOOKALIKE RISK"
+    },
+    "features": {
+      "url_length": 45,
+      "domain_length": 38,
+      "num_dots": 1,
+      "num_hyphens": 3,
+      "num_digits": 0,
+      "num_special_chars": 6,
+      "num_subdomains": 0,
+      "has_ip": 0,
+      "entropy": 3.7051,
+      "suspicious_keyword_count": 3
+    }
+  },
+  {
+    "target": "secure-banking-portal-update.com",
+    "hostname": "secure-banking-portal-update.com",
+    "registered_domain": "secure-banking-portal-update.com",
+    "classification": "PHISHING",
+    "phishing_probability": 1.0,
+    "phishing_percentage": "100.0%",
+    "risk_level": "CRITICAL",
+    "signals": [
+      "[HIGH] Contains suspicious phishing keyword(s): 'update', 'secure', 'banking'",
+      "[MEDIUM] Multiple hyphens in domain (3)",
+      "[MEDIUM] High character entropy (4.12) indicates potential algorithmic generation"
+    ],
+    "brand_lookalike": {
+      "matched_brand": "linkedin",
+      "similarity_score": 53.3,
+      "is_lookalike": false,
+      "verdict": "NO LOOKALIKE RISK"
+    },
+    "features": {
+      "url_length": 39,
+      "domain_length": 32,
+      "num_dots": 1,
+      "num_hyphens": 3,
+      "num_digits": 0,
+      "num_special_chars": 6,
+      "num_subdomains": 0,
+      "has_ip": 0,
+      "entropy": 4.1167,
+      "suspicious_keyword_count": 3
+    }
+  },
+  {
+    "target": "paypa1-security-center.com",
+    "hostname": "paypa1-security-center.com",
+    "registered_domain": "paypa1-security-center.com",
+    "classification": "PHISHING",
+    "phishing_probability": 0.98,
+    "phishing_percentage": "98.0%",
+    "risk_level": "CRITICAL",
+    "signals": [
+      "[HIGH] Contains suspicious phishing keyword(s): 'security'",
+      "[MEDIUM] Multiple hyphens in domain (2)",
+      "[MEDIUM] High character entropy (3.87) indicates potential algorithmic generation",
+      "[HIGH] Brand name 'paypal' is embedded with suspicious affix/keywords",
+      "[HIGH] Visual character substitution/homoglyph detected mimicking 'paypal'"
+    ],
+    "brand_lookalike": {
+      "matched_brand": "paypal",
+      "similarity_score": 100.0,
+      "is_lookalike": true,
+      "verdict": "HIGH LOOKALIKE RISK"
+    },
+    "features": {
+      "url_length": 33,
+      "domain_length": 26,
+      "num_dots": 1,
+      "num_hyphens": 2,
+      "num_digits": 1,
+      "num_special_chars": 5,
+      "num_subdomains": 0,
+      "has_ip": 0,
+      "entropy": 3.8731,
+      "suspicious_keyword_count": 1
+    }
+  },
+  {
+    "target": "g00gle-account-verification.com",
+    "hostname": "g00gle-account-verification.com",
+    "registered_domain": "g00gle-account-verification.com",
+    "classification": "PHISHING",
+    "phishing_probability": 1.0,
+    "phishing_percentage": "100.0%",
+    "risk_level": "CRITICAL",
+    "signals": [
+      "[HIGH] Contains suspicious phishing keyword(s): 'verification', 'account'",
+      "[MEDIUM] Multiple hyphens in domain (2)",
+      "[MEDIUM] High character entropy (3.94) indicates potential algorithmic generation",
+      "[HIGH] Brand name 'google' is embedded with suspicious affix/keywords",
+      "[HIGH] Visual character substitution/homoglyph detected mimicking 'google'"
+    ],
+    "brand_lookalike": {
+      "matched_brand": "google",
+      "similarity_score": 100.0,
+      "is_lookalike": true,
+      "verdict": "HIGH LOOKALIKE RISK"
+    },
+    "features": {
+      "url_length": 38,
+      "domain_length": 31,
+      "num_dots": 1,
+      "num_hyphens": 2,
+      "num_digits": 2,
+      "num_special_chars": 5,
+      "num_subdomains": 0,
+      "has_ip": 0,
+      "entropy": 3.9378,
+      "suspicious_keyword_count": 2
+    }
+  },
+  {
+    "target": "apple-id-verify-manage.info",
+    "hostname": "apple-id-verify-manage.info",
+    "registered_domain": "apple-id-verify-manage.info",
+    "classification": "PHISHING",
+    "phishing_probability": 1.0,
+    "phishing_percentage": "100.0%",
+    "risk_level": "CRITICAL",
+    "signals": [
+      "[HIGH] Contains suspicious phishing keyword(s): 'verify'",
+      "[MEDIUM] Multiple hyphens in domain (3)",
+      "[MEDIUM] High character entropy (3.83) indicates potential algorithmic generation",
+      "[HIGH] Brand name 'apple' is embedded with suspicious affix/keywords"
+    ],
+    "brand_lookalike": {
+      "matched_brand": "apple",
+      "similarity_score": 100.0,
+      "is_lookalike": true,
+      "verdict": "HIGH LOOKALIKE RISK"
+    },
+    "features": {
+      "url_length": 34,
+      "domain_length": 27,
+      "num_dots": 1,
+      "num_hyphens": 3,
+      "num_digits": 0,
+      "num_special_chars": 6,
+      "num_subdomains": 0,
+      "has_ip": 0,
+      "entropy": 3.8282,
+      "suspicious_keyword_count": 1
+    }
+  },
+  {
+    "target": "http://192.168.1.105/login",
+    "hostname": "192.168.1.105",
+    "registered_domain": "192.168.1.105",
+    "classification": "SAFE",
+    "phishing_probability": 0.25,
+    "phishing_percentage": "25.0%",
+    "risk_level": "MEDIUM",
+    "signals": [
+      "[CRITICAL] Uses direct IP address instead of domain name",
+      "[HIGH] Contains suspicious phishing keyword(s): 'login'"
+    ],
+    "brand_lookalike": {
+      "matched_brand": null,
+      "similarity_score": 33.3,
+      "is_lookalike": false,
+      "verdict": "NO LOOKALIKE RISK"
+    },
+    "features": {
+      "url_length": 26,
+      "domain_length": 13,
+      "num_dots": 3,
+      "num_hyphens": 0,
+      "num_digits": 10,
+      "num_special_chars": 4,
+      "num_subdomains": 0,
+      "has_ip": 1,
+      "entropy": 2.7193,
+      "suspicious_keyword_count": 1
+    }
+  }
+]

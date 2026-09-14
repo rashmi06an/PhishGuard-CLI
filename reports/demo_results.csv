@@ -1,0 +1,11 @@
+domain,hostname,classification,phishing_probability,risk_level,signal_count,signals
+google.com,google.com,SAFE,0.0,LOW,0,
+wikipedia.org,wikipedia.org,SAFE,0.0,LOW,0,
+paypal.com,paypal.com,SAFE,0.0,LOW,0,
+github.com,github.com,SAFE,0.0,LOW,0,
+account-verification-service-alert.net,account-verification-service-alert.net,PHISHING,1.0,CRITICAL,3,"[HIGH] Contains suspicious phishing keyword(s): 'verification', 'account', 'service'; [MEDIUM] Multiple hyphens in domain (3); [LOW] Abnormally long domain name (38 chars)"
+secure-banking-portal-update.com,secure-banking-portal-update.com,PHISHING,1.0,CRITICAL,3,"[HIGH] Contains suspicious phishing keyword(s): 'update', 'secure', 'banking'; [MEDIUM] Multiple hyphens in domain (3); [MEDIUM] High character entropy (4.12) indicates potential algorithmic generation"
+paypa1-security-center.com,paypa1-security-center.com,PHISHING,0.98,CRITICAL,5,[HIGH] Contains suspicious phishing keyword(s): 'security'; [MEDIUM] Multiple hyphens in domain (2); [MEDIUM] High character entropy (3.87) indicates potential algorithmic generation; [HIGH] Brand name 'paypal' is embedded with suspicious affix/keywords; [HIGH] Visual character substitution/homoglyph detected mimicking 'paypal'
+g00gle-account-verification.com,g00gle-account-verification.com,PHISHING,1.0,CRITICAL,5,"[HIGH] Contains suspicious phishing keyword(s): 'verification', 'account'; [MEDIUM] Multiple hyphens in domain (2); [MEDIUM] High character entropy (3.94) indicates potential algorithmic generation; [HIGH] Brand name 'google' is embedded with suspicious affix/keywords; [HIGH] Visual character substitution/homoglyph detected mimicking 'google'"
+apple-id-verify-manage.info,apple-id-verify-manage.info,PHISHING,1.0,CRITICAL,4,[HIGH] Contains suspicious phishing keyword(s): 'verify'; [MEDIUM] Multiple hyphens in domain (3); [MEDIUM] High character entropy (3.83) indicates potential algorithmic generation; [HIGH] Brand name 'apple' is embedded with suspicious affix/keywords
+http://192.168.1.105/login,192.168.1.105,SAFE,0.25,MEDIUM,2,[CRITICAL] Uses direct IP address instead of domain name; [HIGH] Contains suspicious phishing keyword(s): 'login'

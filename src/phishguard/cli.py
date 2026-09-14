@@ -6,12 +6,76 @@ from typing import Optional
 
 from rich.console import Console
 from rich.panel import Panel
+from rich.table import Table
 from rich.text import Text
 
 from phishguard import __app_name__, __version__
+from phishguard.similarity import compare_two_domains
+from phishguard.utils import validate_target
 
 console = Console()
 error_console = Console(stderr=True)
+
+
+def handle_compare(genuine_raw: str, suspicious_raw: str) -> int:
+    """Execute the domain comparison workflow and display rich visual results."""
+    # 1. Input validation
+    try:
+        gen_info = validate_target(genuine_raw)
+    except ValueError as exc:
+        print_error(f"Invalid genuine domain '{genuine_raw}': {exc}", suggestion="Provide a valid domain, e.g., paypal.com")
+        return 1
+
+    try:
+        susp_info = validate_target(suspicious_raw)
+    except ValueError as exc:
+        print_error(f"Invalid suspicious domain '{suspicious_raw}': {exc}", suggestion="Provide a valid domain, e.g., paypa1-login.com")
+        return 1
+
+    # 2. Perform comparison
+    result = compare_two_domains(gen_info.original_input, susp_info.original_input)
+
+    # 3. Format terminal output
+    content = Text()
+    content.append("GENUINE DOMAIN:\n", style="bold cyan")
+    content.append(f"{gen_info.registered_domain or gen_info.hostname}\n\n", style="white")
+
+    content.append("SUSPICIOUS TARGET:\n", style="bold magenta")
+    content.append(f"{susp_info.registered_domain or susp_info.hostname}\n\n", style="white")
+
+    content.append("SIMILARITY SCORE:\n", style="bold yellow")
+    content.append(f"{result.similarity_score:.1f}% ", style="bold white")
+    content.append("(normalized visual / lookalike score)\n\n", style="dim italic white")
+
+    content.append("DETECTED SIGNALS:\n", style="bold cyan")
+    if result.signals:
+        for sig in result.signals:
+            content.append(f" • {sig}\n", style="yellow")
+    else:
+        content.append(" • No significant lookalike patterns detected\n", style="dim")
+    content.append("\n")
+
+    content.append("VERDICT:\n", style="bold white")
+    if "HIGH" in result.verdict:
+        verdict_style = "bold red"
+    elif "SUSPICIOUS" in result.verdict:
+        verdict_style = "bold yellow"
+    elif "IDENTICAL" in result.verdict:
+        verdict_style = "bold green"
+    else:
+        verdict_style = "bold cyan"
+
+    content.append(f"{result.verdict}\n", style=verdict_style)
+
+    panel = Panel(
+        content,
+        title="[bold white]PHISHGUARD[/bold white] [cyan]— LOOKALIKE DOMAIN COMPARATOR[/cyan]",
+        border_style="bright_blue",
+        padding=(1, 2),
+        expand=False,
+    )
+    console.print(panel)
+    return 0
 
 
 def display_banner(subtitle: Optional[str] = None) -> None:
@@ -213,10 +277,8 @@ def main() -> None:
         elif args.command == "batch":
             console.print(f"[cyan]Batch command invoked for file:[/cyan] [bold]{args.csv_path}[/bold]")
         elif args.command == "compare":
-            console.print(
-                f"[cyan]Compare command invoked:[/cyan] genuine=[bold]{args.genuine}[/bold], "
-                f"suspicious=[bold]{args.suspicious}[/bold]"
-            )
+            code = handle_compare(args.genuine, args.suspicious)
+            sys.exit(code)
         elif args.command == "train":
             console.print(f"[cyan]Train command invoked with dataset:[/cyan] [bold]{args.dataset}[/bold]")
         elif args.command == "report":

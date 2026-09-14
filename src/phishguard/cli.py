@@ -2,7 +2,7 @@
 
 import argparse
 import sys
-from typing import Optional
+from typing import Any, List, Optional
 
 from rich.console import Console
 from rich.panel import Panel

@@ -10,6 +10,7 @@ from rich.table import Table
 from rich.text import Text
 
 from phishguard import __app_name__, __version__
+from phishguard.predictor import train_model
 from phishguard.similarity import compare_two_domains
 from phishguard.utils import validate_target
 
@@ -70,6 +71,47 @@ def handle_compare(genuine_raw: str, suspicious_raw: str) -> int:
     panel = Panel(
         content,
         title="[bold white]PHISHGUARD[/bold white] [cyan]— LOOKALIKE DOMAIN COMPARATOR[/cyan]",
+        border_style="bright_blue",
+        padding=(1, 2),
+        expand=False,
+    )
+    console.print(panel)
+    return 0
+
+
+def handle_train(dataset_path: str, model_type: str, output_model: str) -> int:
+    """Execute model training and print evaluation metrics."""
+    console.print(f"[cyan]Loading dataset from:[/cyan] [bold white]{dataset_path}[/bold white]")
+    console.print(f"[cyan]Classifier algorithm:[/cyan] [bold yellow]{model_type.replace('_', ' ').title()}[/bold yellow]")
+
+    with console.status("[bold green]Extracting features & training model...[/bold green]"):
+        try:
+            metrics = train_model(
+                dataset_path=dataset_path,
+                model_type=model_type,
+                output_path=output_model,
+            )
+        except Exception as exc:
+            print_error(f"Training failed: {exc}", suggestion="Verify dataset path and column format ('url', 'label')")
+            return 1
+
+    content = Text()
+    content.append("Model Training Complete\n", style="bold green")
+    content.append("──────────────────────────────────────────\n", style="bright_blue")
+    content.append(f"Dataset Samples: {metrics['dataset_samples']} URLs\n", style="white")
+    content.append(f"Train / Test Split: {metrics['train_samples']} / {metrics['test_samples']}\n\n", style="dim white")
+
+    content.append(f"Accuracy : {metrics['accuracy']:.1f}%\n", style="bold white")
+    content.append(f"Precision: {metrics['precision']:.1f}%\n", style="bold white")
+    content.append(f"Recall   : {metrics['recall']:.1f}%\n", style="bold white")
+    content.append(f"F1 Score : {metrics['f1_score']:.1f}%\n\n", style="bold white")
+
+    content.append("✔ Model saved successfully to: ", style="cyan")
+    content.append(f"{output_model}\n", style="bold green")
+
+    panel = Panel(
+        content,
+        title="[bold white]PHISHGUARD[/bold white] [cyan]— MACHINE LEARNING PIPELINE[/cyan]",
         border_style="bright_blue",
         padding=(1, 2),
         expand=False,
@@ -280,7 +322,8 @@ def main() -> None:
             code = handle_compare(args.genuine, args.suspicious)
             sys.exit(code)
         elif args.command == "train":
-            console.print(f"[cyan]Train command invoked with dataset:[/cyan] [bold]{args.dataset}[/bold]")
+            code = handle_train(args.dataset, args.model_type, args.output_model)
+            sys.exit(code)
         elif args.command == "report":
             console.print(f"[cyan]Report command invoked for file:[/cyan] [bold]{args.report_file}[/bold]")
         elif args.command == "demo":

@@ -317,7 +317,8 @@ pytest tests/ -v
 - Dynamic DNS lookup resolution (WHOIS registration age checking).
 - Threat intelligence feed API connectors (VirusTotal, AlienVault OTX).
 
----
+<!-- --- -->
+<!-- 
 
 ## 11. College Evaluation Viva Guide (15 Q&As)
 
@@ -367,7 +368,7 @@ pytest tests/ -v
     *A:* Tests are modularized in `tests/` using `pytest`, testing unit features, similarity logic, ML predictions, and CLI integration.
 
 ---
-
+<!-- 
 ## 12. 2-Minute Evaluator Presentation Script
 
 > *"Good morning. Today I am presenting **PhishGuard-CLI**, a terminal application developed for detecting phishing domains and deceptive brand lookalikes.*
@@ -387,4 +388,4 @@ pytest tests/ -v
 > 
 > *As you can see on the terminal, the system validates the domain, extracts 10 lexical features including Shannon entropy, checks brand similarity, runs model inference, and outputs color-coded risk levels and JSON/CSV reports.*
 > 
-> *All 43 automated unit tests pass, and normal user errors are intercepted with helpful hints instead of Python tracebacks. Thank you."*
+> *All 43 automated unit tests pass, and normal user errors are intercepted with helpful hints instead of Python tracebacks. Thank you."* --> -->

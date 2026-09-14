@@ -58,7 +58,7 @@ def render_scan_result(res: ScanResult) -> None:
     content.append(f"{res.risk_level}\n\n", style=get_risk_style(res.risk_level))
 
     # Lookalike information if applicable
-    if res.brand_lookalike.matched_brand:
+    if res.brand_lookalike.is_lookalike and res.brand_lookalike.matched_brand:
         content.append("Brand Lookalike:\n", style="bold white")
         brand_str = f"Targeting '{res.brand_lookalike.matched_brand}' ({res.brand_lookalike.similarity_score:.1f}% similarity)"
         content.append(f"{brand_str}\n\n", style="yellow")

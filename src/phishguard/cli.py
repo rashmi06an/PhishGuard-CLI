@@ -10,12 +10,62 @@ from rich.table import Table
 from rich.text import Text
 
 from phishguard import __app_name__, __version__
-from phishguard.predictor import train_model
+from phishguard.predictor import ModelNotFoundError, train_model
+from phishguard.reporter import (
+    export_to_csv,
+    export_to_json,
+    inspect_report_file,
+    render_batch_table,
+    render_scan_result,
+)
+from phishguard.scanner import scan_target
 from phishguard.similarity import compare_two_domains
 from phishguard.utils import validate_target
 
 console = Console()
 error_console = Console(stderr=True)
+
+
+def handle_scan(
+    target_raw: str,
+    output_format: str = "terminal",
+    output_path: Optional[str] = None,
+    analyze_web: bool = False,
+) -> int:
+    """Execute domain scan and format output according to user preferences."""
+    try:
+        scan_res = scan_target(target_raw, analyze_web=analyze_web)
+    except ValueError as exc:
+        print_error(f"Invalid domain '{target_raw}': {exc}", suggestion="Try: phishguard scan example.com")
+        return 1
+    except ModelNotFoundError as exc:
+        print_error(str(exc), suggestion="Run 'phishguard train' to train the detection model first.")
+        return 1
+    except Exception as exc:
+        print_error(f"Scan failed: {exc}", suggestion="Check domain structure and try again.")
+        return 1
+
+    # Output formatting
+    if output_format == "json":
+        console.print_json(data=scan_res.to_dict())
+    elif output_format == "csv":
+        console.print(f"domain,classification,probability,risk_level")
+        console.print(
+            f"{scan_res.target},{scan_res.classification},"
+            f"{scan_res.phishing_probability:.4f},{scan_res.risk_level}"
+        )
+    else:
+        render_scan_result(scan_res)
+
+    # File export if requested
+    if output_path:
+        ext = output_path.lower()
+        if ext.endswith(".csv"):
+            export_to_csv([scan_res], output_path)
+        else:
+            export_to_json(scan_res.to_dict(), output_path)
+
+    return 0
 
 
 def handle_compare(genuine_raw: str, suspicious_raw: str) -> int:
@@ -315,7 +365,8 @@ def main() -> None:
 
     try:
         if args.command == "scan":
-            console.print(f"[cyan]Scan command invoked for target:[/cyan] [bold]{args.target}[/bold]")
+            code = handle_scan(args.target, args.format, args.output, args.analyze_web)
+            sys.exit(code)
         elif args.command == "batch":
             console.print(f"[cyan]Batch command invoked for file:[/cyan] [bold]{args.csv_path}[/bold]")
         elif args.command == "compare":

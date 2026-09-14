@@ -115,6 +115,44 @@ pip install -e .
 
 ---
 
+## ⚡ Quickstart: Run on Local in 60 Seconds
+
+Once installed, here is the complete sequence of commands to test every feature on your local machine:
+
+```bash
+# 1. Check CLI status and help banner
+./phishguard --help
+
+# 2. Run the offline college demonstration
+./phishguard demo
+
+# 3. Scan a safe genuine domain
+./phishguard scan google.com
+
+# 4. Scan a phishing domain
+./phishguard scan paypal-secure-login-example.com
+
+# 5. Export scan result to JSON
+./phishguard scan paypal-secure-login-example.com --format json
+
+# 6. Compare a genuine domain with a lookalike / typosquat
+./phishguard compare paypal.com paypa1-login.com
+
+# 7. Run automated batch scanning from CSV and export report
+./phishguard batch data/demo_domains.csv --output reports/results.json
+
+# 8. Inspect the generated report in terminal
+./phishguard report reports/results.json
+
+# 9. Retrain the Machine Learning model on the public dataset
+./phishguard train --dataset data/train_dataset.csv
+
+# 10. Run all 43 automated unit tests
+pytest tests/ -v
+```
+
+---
+
 ## 6. CLI Command Reference & Examples
 
 ### Global Help & Version

@@ -9,7 +9,7 @@ from dataclasses import dataclass, field
 import io
 import math
 import os
-from typing import List, Optional, Tuple, Union
+from typing import Any, List, Optional, Tuple, Union
 
 try:
     from PIL import Image

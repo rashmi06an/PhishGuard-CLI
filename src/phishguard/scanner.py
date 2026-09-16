@@ -8,10 +8,12 @@ from dataclasses import asdict, dataclass
 from typing import Any, Dict, List, Optional
 
 from phishguard.features import extract_features
+from phishguard.image_analyzer import ImageSimilarityResult, compare_webpage_images
 from phishguard.predictor import DEFAULT_MODEL_PATH, predict_target
 from phishguard.similarity import SimilarityResult, analyze_brand_lookalike
 from phishguard.utils import TargetInfo, validate_target
 from phishguard.web_analyzer import WebAnalysisResult, analyze_webpage
+from phishguard.whois_analyzer import WhoisResult, lookup_whois
 
 
 @dataclass
@@ -28,6 +30,8 @@ class ScanResult:
     brand_lookalike: SimilarityResult
     features: Dict[str, Any]
     web_analysis: Optional[WebAnalysisResult] = None
+    whois: Optional[WhoisResult] = None
+    image_analysis: Optional[ImageSimilarityResult] = None
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert result to a clean dictionary for JSON/CSV reporting."""
@@ -50,14 +54,28 @@ class ScanResult:
         }
         if self.web_analysis:
             data["web_analysis"] = asdict(self.web_analysis)
+        if self.whois:
+            data["whois"] = self.whois.to_dict()
+        if self.image_analysis:
+            data["image_analysis"] = self.image_analysis.to_dict()
         return data
 
 
-def calculate_risk_level(probability: float, is_lookalike: bool, signal_count: int) -> str:
+def calculate_risk_level(
+    probability: float,
+    is_lookalike: bool,
+    signal_count: int,
+    is_newly_registered: bool = False,
+    is_visual_lookalike: bool = False,
+) -> str:
     """Determine composite security risk tier based on probability and security signals."""
-    if probability >= 0.80 or (probability >= 0.60 and is_lookalike):
+    if (
+        probability >= 0.80
+        or (probability >= 0.60 and (is_lookalike or is_visual_lookalike))
+        or (is_newly_registered and is_lookalike)
+    ):
         return "CRITICAL"
-    if probability >= 0.65 or is_lookalike or signal_count >= 3:
+    if probability >= 0.65 or is_lookalike or is_visual_lookalike or is_newly_registered or signal_count >= 3:
         return "HIGH"
     if probability >= 0.40 or signal_count >= 1:
         return "MEDIUM"
@@ -68,6 +86,9 @@ def scan_target(
     raw_target: str,
     model_path: str = DEFAULT_MODEL_PATH,
     analyze_web: bool = False,
+    lookup_domain_whois: bool = False,
+    suspicious_image_path: Optional[str] = None,
+    genuine_image_path: Optional[str] = None,
 ) -> ScanResult:
     """Execute end-to-end security evaluation for a domain or URL.
 
@@ -92,7 +113,18 @@ def scan_target(
     if analyze_web:
         web_res = analyze_webpage(target_info.normalized_url or target_info.original_input)
 
-    # 6. Aggregate transparent security signals
+    # 6. Optional WHOIS database newly registered domain (NRD) analysis
+    whois_res: Optional[WhoisResult] = None
+    if lookup_domain_whois:
+        lookup_host = target_info.registered_domain or target_info.hostname
+        whois_res = lookup_whois(lookup_host)
+
+    # 7. Optional web page image analysis (Technique b)
+    img_res: Optional[ImageSimilarityResult] = None
+    if suspicious_image_path and genuine_image_path:
+        img_res = compare_webpage_images(genuine_image_path, suspicious_image_path)
+
+    # 8. Aggregate transparent security signals
     all_signals: List[str] = list(feat_res.signals)
 
     if sim_res.is_lookalike:
@@ -103,11 +135,22 @@ def scan_target(
     if web_res and web_res.signals:
         all_signals.extend(web_res.signals)
 
-    # 7. Compute composite risk tier
+    if whois_res and whois_res.signals:
+        all_signals.extend(whois_res.signals)
+
+    if img_res and img_res.signals:
+        all_signals.extend(img_res.signals)
+
+    # 9. Compute composite risk tier
+    is_nrd = bool(whois_res and whois_res.is_newly_registered)
+    is_vis = bool(img_res and img_res.is_visual_lookalike)
+
     risk_level = calculate_risk_level(
         probability=pred_res.probability,
         is_lookalike=sim_res.is_lookalike,
         signal_count=len(all_signals),
+        is_newly_registered=is_nrd,
+        is_visual_lookalike=is_vis,
     )
 
     return ScanResult(
@@ -121,4 +164,6 @@ def scan_target(
         brand_lookalike=sim_res,
         features=feat_res.features,
         web_analysis=web_res,
+        whois=whois_res,
+        image_analysis=img_res,
     )

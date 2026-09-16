@@ -97,6 +97,31 @@ def render_scan_result(res: ScanResult) -> None:
                 style="dim yellow",
             )
 
+    # Optional WHOIS findings
+    if res.whois:
+        content.append("\nWHOIS Open Database Intelligence:\n", style="bold white")
+        if res.whois.is_available:
+            content.append(f" Registrar  : {res.whois.registrar or 'Private / Masked'}\n", style="dim white")
+            content.append(f" Created On : {res.whois.creation_date or 'Unknown'}\n", style="dim white")
+            age_str = f"{res.whois.domain_age_days} days" if res.whois.domain_age_days is not None else "Unknown"
+            age_style = "bold red" if res.whois.is_newly_registered else ("yellow" if res.whois.is_young_domain else "dim green")
+            content.append(f" Domain Age : {age_str} ", style=age_style)
+            if res.whois.is_newly_registered:
+                content.append("[CRITICAL NRD: <30 Days]\n", style="bold red")
+            elif res.whois.is_young_domain:
+                content.append("[HIGH RISK: <90 Days]\n", style="yellow")
+            else:
+                content.append("\n", style="white")
+        else:
+            content.append(f" {res.whois.error_message or 'WHOIS lookup unavailable'}\n", style="dim yellow")
+
+    # Optional Image / Visual Analysis findings
+    if res.image_analysis:
+        content.append("\nWebpage Image & Visual Lookalike Analysis:\n", style="bold white")
+        content.append(f" Visual Similarity: {res.image_analysis.similarity_score:.1f}%\n", style="bold white")
+        content.append(f" Visual Phishing Prob: {res.image_analysis.visual_probability_score * 100:.1f}%\n", style="bold yellow")
+        content.append(f" Verdict: {res.image_analysis.verdict}\n", style="bold red" if res.image_analysis.is_visual_lookalike else "bold green")
+
     panel = Panel(
         content,
         title="[bold white]PHISHGUARD CLI[/bold white] [cyan]— PHISHING DOMAIN SCANNER[/cyan]",

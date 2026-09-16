@@ -19,16 +19,25 @@ While the core problem statement incorporates Machine Learning for risk predicti
 
 ---
 
-## 2. Problem Statement
+## 2. Problem Statement (NTRO Specification)
 
-Cyber adversaries register deceptive domain names that imitate the look and feel of reputable brands (e.g., banks, e-commerce, cloud platforms) to harvest credentials and deceive users. 
+**Source Metadata:**
+- **Year:** 2023
+- **Organisation:** National Technical Research Organisation (NTRO)
+- **Technology Bucket:** Blockchain & Cybersecurity
+- **Category:** Software
 
-**Objective:** Build an intelligent command-line utility that:
-1. Analyzes lexical characteristics and structural properties of domain names.
-2. Identifies brand typosquatting, character substitutions (homoglyphs), and deceptive affixes.
-3. Applies a machine learning classifier trained on public phishing data to output a probability score.
-4. Generates structured reports (Terminal, JSON, CSV) in a matter of seconds.
-5. Operates entirely without complex cloud or database infrastructure.
+> *"Create an intelligent system using AI/ML to detect phishing domains which imitate look and feel of genuine domains from newly registered websites based on open source databases (Example WHOIS Database)."*
+
+### Key NTRO Techniques Implemented:
+1. **AI/ML Phishing Classification**: Machine Learning models (`RandomForestClassifier` / `LogisticRegression`) predicting probability scores from 0.0% to 100.0%.
+2. **Technique (a) Backend Code / Content Similarity**: Analyzes DOM tree structures, authentication forms, password inputs, titles, and text token overlap between genuine and suspicious pages.
+3. **Technique (b) Web Page Image Analysis**: Performs perceptual hashing (64-bit dHash) and color histogram correlation between screenshots; higher visual similarity results in higher lookalike phishing probability.
+4. **Open Source WHOIS Database Integration**: Checks domain creation timestamps and flags Newly Registered Domains (NRDs <30 days) and young domains (<90 days).
+5. **Evaluation Capabilities**:
+   - **(e) Probability scores**: High-precision probability and similarity percentages for domains, content, and visual lookalikes.
+   - **(f) High speed detection**: Sub-second offline evaluation (<5ms per domain) with strict 3s timeouts for network operations.
+   - **(g) Flexible output formats**: Rich terminal tables, structured JSON (`--format json`), and CSV export.
 
 ---
 
@@ -36,11 +45,14 @@ Cyber adversaries register deceptive domain names that imitate the look and feel
 
 - **Lexical Security Feature Extractor**: Computes 10 explainable structural features including Shannon entropy, length ratios, hyphen/dot counts, subdomain depths, and credential keyword frequencies.
 - **Brand Lookalike & Homoglyph Engine**: Leverages `RapidFuzz` string distance algorithms combined with visual homoglyph normalization (e.g., `0` for `o`, `1` for `l`, `rn` for `m`) to catch typosquatting.
-- **Explainable Threat Signals**: Highlights human-readable security indicators (e.g., `[HIGH] Contains suspicious phishing keyword: 'verification'`).
+- **Webpage Image Analysis (NTRO Technique b)**: Evaluates structural layout similarity via difference hash (dHash) and color palette histograms to detect cloned visual designs.
+- **Backend Code & Content Similarity (NTRO Technique a)**: Compares DOM tag sequences and login form inputs to detect cloned backend web pages.
+- **WHOIS Open Database Intelligence**: Detects newly registered domains (NRDs) that adversaries register during active phishing campaigns.
+- **Explainable Threat Signals**: Highlights human-readable security indicators (e.g., `[CRITICAL] Newly Registered Domain (NRD): Registered 5 days ago`).
 - **Machine Learning Inference**: Uses an explainable `RandomForestClassifier` trained on public domain feeds to estimate phishing likelihood from `0.0%` to `100.0%`.
 - **Automated Batch Processing**: Ingests multi-line domain lists from CSV files and displays a color-coded summary table.
 - **Flexible Report Generation**: Exports structured reports in JSON and CSV formats for audit trails and SIEM ingestion.
-- **100% Offline College Demo**: Built-in `phishguard demo` command runs an entire end-to-end evaluation flow offline with zero network dependencies.
+- **100% Offline Demonstration**: Built-in `phishguard demo` command runs an entire end-to-end evaluation flow offline with zero network dependencies.
 
 ---
 

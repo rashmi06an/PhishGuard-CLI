@@ -1,7 +1,9 @@
 """Command Line Interface entrypoint for PhishGuard-CLI."""
 
 import argparse
+import signal
 import sys
+import time
 from typing import Any, List, Optional
 
 from rich.console import Console
@@ -169,6 +171,143 @@ def handle_batch(
         else:
             export_to_json([r.to_dict() for r in results], output_path)
 
+    return 0
+
+
+def _capture_and_compare_images(genuine_url: str, suspicious_url: str) -> None:
+    """Auto-capture live screenshots of two sites and run visual lookalike analysis (NTRO Technique b)."""
+    import os
+    import tempfile
+
+    from phishguard.screenshot import capture_screenshot
+
+    tmp_dir = tempfile.mkdtemp(prefix="phishguard_shots_")
+    gen_path = os.path.join(tmp_dir, "genuine.png")
+    susp_path = os.path.join(tmp_dir, "suspicious.png")
+
+    console.print(f"[cyan]Capturing live screenshot of genuine site:[/cyan] {genuine_url}")
+    gen_cap = capture_screenshot(genuine_url, gen_path)
+    console.print(f"[cyan]Capturing live screenshot of suspicious site:[/cyan] {suspicious_url}")
+    susp_cap = capture_screenshot(suspicious_url, susp_path)
+
+    if not gen_cap.success or not susp_cap.success:
+        err = gen_cap.error_message or susp_cap.error_message or "Screenshot capture unavailable."
+        print_error("Automated screenshot capture failed.", suggestion=err)
+        return
+
+    img_res = compare_webpage_images(gen_cap.output_path, susp_cap.output_path)
+    _render_image_similarity_panel(img_res)
+
+
+def handle_monitor(
+    feed_source: str,
+    interval_sec: int = 300,
+    run_once: bool = False,
+    output_dir: str = "reports/monitor",
+    limit: Optional[int] = None,
+    whois: bool = False,
+) -> int:
+    """Automated, continuous monitoring of a newly-registered-domain (NRD) feed.
+
+    Polls an open-source NRD feed on an interval, scans each domain with the AI/ML
+    detector, and writes timestamped JSON/CSV reports. Shuts down gracefully on
+    SIGINT/SIGTERM so no report is left half-written.
+    """
+    import os
+    from datetime import datetime
+
+    from phishguard.feed import load_nrd_feed
+
+    # Graceful shutdown via Unix signals (NTRO: automated, long-running tool)
+    stop_flag = {"stop": False}
+
+    def _request_stop(signum, _frame):
+        stop_flag["stop"] = True
+        console.print(f"\n[yellow]Received signal {signum}; finishing current cycle and shutting down...[/yellow]")
+
+    previous_handlers = {}
+    for sig in (signal.SIGINT, signal.SIGTERM):
+        try:
+            previous_handlers[sig] = signal.signal(sig, _request_stop)
+        except (ValueError, OSError):
+            # signal() only works in the main thread; ignore if unavailable
+            pass
+
+    os.makedirs(output_dir, exist_ok=True)
+    seen_domains: set = set()
+    cycle = 0
+
+    display_banner(subtitle="AUTOMATED NRD MONITORING (NTRO 2023)")
+    console.print(
+        f"[dim white]Feed source:[/dim white] [bold]{feed_source}[/bold]  "
+        f"[dim white]Interval:[/dim white] [bold]{interval_sec}s[/bold]  "
+        f"[dim white]Mode:[/dim white] [bold]{'single-pass' if run_once else 'continuous'}[/bold]\n"
+    )
+
+    try:
+        while not stop_flag["stop"]:
+            cycle += 1
+            try:
+                domains = load_nrd_feed(feed_source, limit=limit)
+            except (FileNotFoundError, ValueError) as exc:
+                print_error(f"Feed load failed: {exc}", suggestion="Provide a valid NRD feed file or URL.")
+                return 1
+
+            # Only scan domains not already seen in this monitoring session
+            new_domains = [d for d in domains if d not in seen_domains]
+            for d in new_domains:
+                seen_domains.add(d)
+
+            console.print(
+                f"[cyan]▶ Cycle {cycle}[/cyan]: feed has [bold]{len(domains)}[/bold] domains, "
+                f"[bold]{len(new_domains)}[/bold] new to evaluate."
+            )
+
+            results: List[Any] = []
+            flagged = 0
+            with console.status("[bold green]Scanning newly registered domains...[/bold green]"):
+                for target in new_domains:
+                    if stop_flag["stop"]:
+                        break
+                    try:
+                        res = scan_target(target, lookup_domain_whois=whois)
+                        results.append(res)
+                        if res.classification in ("PHISHING", "SUSPICIOUS"):
+                            flagged += 1
+                    except Exception as exc:
+                        console.print(f"[dim red]✖ Skipping '{target}': {exc}[/dim red]")
+
+            if results:
+                render_batch_table(results)
+                stamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                json_path = os.path.join(output_dir, f"nrd_scan_{stamp}.json")
+                csv_path = os.path.join(output_dir, f"nrd_scan_{stamp}.csv")
+                export_to_json([r.to_dict() for r in results], json_path)
+                export_to_csv(results, csv_path)
+                console.print(
+                    f"[bold white]Cycle {cycle} summary:[/bold white] "
+                    f"[red]{flagged} flagged[/red] / {len(results)} scanned\n"
+                )
+            else:
+                console.print("[dim]No new domains to scan this cycle.[/dim]\n")
+
+            if run_once or stop_flag["stop"]:
+                break
+
+            # Interruptible sleep so SIGINT/SIGTERM is honored promptly
+            slept = 0
+            while slept < interval_sec and not stop_flag["stop"]:
+                time.sleep(min(1, interval_sec - slept))
+                slept += 1
+    finally:
+        # Restore original signal handlers
+        for sig, handler in previous_handlers.items():
+            try:
+                signal.signal(sig, handler)
+            except (ValueError, OSError):
+                pass
+
+    console.print("[green]Monitoring stopped cleanly.[/green]")
     return 0
 
 
@@ -361,6 +500,7 @@ def handle_compare(
     compare_content: bool = False,
     image1: Optional[str] = None,
     image2: Optional[str] = None,
+    capture: bool = False,
 ) -> int:
     """Execute the domain comparison workflow and display rich visual results."""
     # 1. Input validation
@@ -426,11 +566,16 @@ def handle_compare(
         c_res = compare_webpage_content(gen_info.original_input, susp_info.original_input)
         _render_content_similarity_panel(c_res, gen_info.original_input, susp_info.original_input)
 
-    # 5. Optional Webpage Image Analysis (NTRO Technique b)
+    # 5. Optional Webpage Image Analysis (NTRO Technique b) — user-supplied images
     if image1 and image2:
         console.print("\n[bold cyan]Analyzing webpage screenshots / images for visual lookalikes...[/bold cyan]")
         img_res = compare_webpage_images(image1, image2)
         _render_image_similarity_panel(img_res)
+
+    # 6. Optional automated screenshot capture + visual comparison (NTRO Technique b)
+    if capture:
+        console.print("\n[bold cyan]Auto-capturing live webpage screenshots for visual lookalike analysis...[/bold cyan]")
+        _capture_and_compare_images(gen_info.original_input, susp_info.original_input)
 
     return 0
 
@@ -644,6 +789,11 @@ def build_parser() -> argparse.ArgumentParser:
         metavar="PATH",
         help="Path to suspicious webpage image/screenshot (NTRO Technique b)",
     )
+    compare_parser.add_argument(
+        "--capture",
+        action="store_true",
+        help="Auto-capture live screenshots of both sites (headless Chromium) and compare them (NTRO Technique b)",
+    )
 
     # 4. TRAIN
     train_parser = subparsers.add_parser(
@@ -686,6 +836,49 @@ def build_parser() -> argparse.ArgumentParser:
         description="Executes a self-contained offline demo showcasing safe, suspicious, and lookalike domain detection.",
     )
 
+    # 7. MONITOR
+    monitor_parser = subparsers.add_parser(
+        "monitor",
+        help="Automatically ingest a newly-registered-domain (NRD) feed and scan it on an interval",
+        description=(
+            "Polls an open-source NRD feed (file, URL, or .zip), auto-scans each domain with the "
+            "AI/ML detector, and writes timestamped JSON/CSV reports. Runs continuously until "
+            "interrupted (Ctrl+C / SIGTERM), or a single pass with --once."
+        ),
+    )
+    monitor_parser.add_argument(
+        "feed",
+        metavar="FEED",
+        help="NRD feed source: local .txt/.csv/.zip file, or http(s) URL to a feed/zip",
+    )
+    monitor_parser.add_argument(
+        "-i", "--interval",
+        type=int,
+        default=300,
+        help="Seconds between polling cycles in continuous mode (default: 300)",
+    )
+    monitor_parser.add_argument(
+        "--once",
+        action="store_true",
+        help="Run a single scan pass and exit (useful for scheduled cron jobs)",
+    )
+    monitor_parser.add_argument(
+        "-o", "--output-dir",
+        default="reports/monitor",
+        help="Directory for timestamped monitoring reports (default: reports/monitor)",
+    )
+    monitor_parser.add_argument(
+        "--limit",
+        type=int,
+        default=None,
+        help="Maximum number of domains to read from the feed per cycle",
+    )
+    monitor_parser.add_argument(
+        "--whois",
+        action="store_true",
+        help="Enrich each scan with a live WHOIS domain-age / NRD lookup",
+    )
+
     return parser
 
 
@@ -721,6 +914,7 @@ def main() -> None:
                 compare_content=args.content,
                 image1=args.image1,
                 image2=args.image2,
+                capture=args.capture,
             )
             sys.exit(code)
         elif args.command == "train":
@@ -731,6 +925,16 @@ def main() -> None:
             sys.exit(code)
         elif args.command == "demo":
             code = handle_demo()
+            sys.exit(code)
+        elif args.command == "monitor":
+            code = handle_monitor(
+                args.feed,
+                interval_sec=args.interval,
+                run_once=args.once,
+                output_dir=args.output_dir,
+                limit=args.limit,
+                whois=args.whois,
+            )
             sys.exit(code)
         else:
             parser.print_help()

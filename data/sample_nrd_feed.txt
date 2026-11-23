@@ -1,0 +1,14 @@
+# Sample Newly Registered Domains (NRD) feed for PhishGuard-CLI automated monitoring.
+# Format: one domain per line. Lines starting with '#' or '//' are ignored.
+# Mimics the daily newly-registered-domain lists published by open-source feeds
+# (e.g. whoisds.com). Point `phishguard monitor` at this file or a live feed URL.
+google.com
+paypa1-security-center.com
+account-verification-service-alert.net
+g00gle-account-verification.com
+apple-id-verify-manage.info
+secure-banking-portal-update.com
+microsoft-support-login.help
+amaz0n-order-confirm.shop
+wikipedia.org
+netflix-billing-update-now.live

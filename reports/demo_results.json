@@ -4,8 +4,8 @@
     "hostname": "google.com",
     "registered_domain": "google.com",
     "classification": "SAFE",
-    "phishing_probability": 0.0,
-    "phishing_percentage": "0.0%",
+    "phishing_probability": 0.0505,
+    "phishing_percentage": "5.1%",
     "risk_level": "LOW",
     "signals": [],
     "brand_lookalike": {
@@ -24,7 +24,9 @@
       "num_subdomains": 0,
       "has_ip": 0,
       "entropy": 2.6464,
-      "suspicious_keyword_count": 0
+      "suspicious_keyword_count": 0,
+      "brand_similarity": 100.0,
+      "brand_embedded": 0
     }
   },
   {
@@ -52,7 +54,9 @@
       "num_subdomains": 0,
       "has_ip": 0,
       "entropy": 3.3347,
-      "suspicious_keyword_count": 0
+      "suspicious_keyword_count": 0,
+      "brand_similarity": 58.8,
+      "brand_embedded": 0
     }
   },
   {
@@ -60,8 +64,8 @@
     "hostname": "paypal.com",
     "registered_domain": "paypal.com",
     "classification": "SAFE",
-    "phishing_probability": 0.0,
-    "phishing_percentage": "0.0%",
+    "phishing_probability": 0.0305,
+    "phishing_percentage": "3.0%",
     "risk_level": "LOW",
     "signals": [],
     "brand_lookalike": {
@@ -80,7 +84,9 @@
       "num_subdomains": 0,
       "has_ip": 0,
       "entropy": 2.9219,
-      "suspicious_keyword_count": 0
+      "suspicious_keyword_count": 0,
+      "brand_similarity": 100.0,
+      "brand_embedded": 0
     }
   },
   {
@@ -88,8 +94,8 @@
     "hostname": "github.com",
     "registered_domain": "github.com",
     "classification": "SAFE",
-    "phishing_probability": 0.0,
-    "phishing_percentage": "0.0%",
+    "phishing_probability": 0.12,
+    "phishing_percentage": "12.0%",
     "risk_level": "LOW",
     "signals": [],
     "brand_lookalike": {
@@ -108,7 +114,9 @@
       "num_subdomains": 0,
       "has_ip": 0,
       "entropy": 3.3219,
-      "suspicious_keyword_count": 0
+      "suspicious_keyword_count": 0,
+      "brand_similarity": 100.0,
+      "brand_embedded": 0
     }
   },
   {
@@ -116,8 +124,8 @@
     "hostname": "account-verification-service-alert.net",
     "registered_domain": "account-verification-service-alert.net",
     "classification": "PHISHING",
-    "phishing_probability": 1.0,
-    "phishing_percentage": "100.0%",
+    "phishing_probability": 0.99,
+    "phishing_percentage": "99.0%",
     "risk_level": "CRITICAL",
     "signals": [
       "[HIGH] Contains suspicious phishing keyword(s): 'verification', 'account', 'service'",
@@ -140,7 +148,9 @@
       "num_subdomains": 0,
       "has_ip": 0,
       "entropy": 3.7051,
-      "suspicious_keyword_count": 3
+      "suspicious_keyword_count": 3,
+      "brand_similarity": 60.0,
+      "brand_embedded": 0
     }
   },
   {
@@ -172,7 +182,9 @@
       "num_subdomains": 0,
       "has_ip": 0,
       "entropy": 4.1167,
-      "suspicious_keyword_count": 3
+      "suspicious_keyword_count": 3,
+      "brand_similarity": 53.3,
+      "brand_embedded": 0
     }
   },
   {
@@ -206,7 +218,9 @@
       "num_subdomains": 0,
       "has_ip": 0,
       "entropy": 3.8731,
-      "suspicious_keyword_count": 1
+      "suspicious_keyword_count": 1,
+      "brand_similarity": 100.0,
+      "brand_embedded": 1
     }
   },
   {
@@ -240,7 +254,9 @@
       "num_subdomains": 0,
       "has_ip": 0,
       "entropy": 3.9378,
-      "suspicious_keyword_count": 2
+      "suspicious_keyword_count": 2,
+      "brand_similarity": 100.0,
+      "brand_embedded": 1
     }
   },
   {
@@ -248,8 +264,8 @@
     "hostname": "apple-id-verify-manage.info",
     "registered_domain": "apple-id-verify-manage.info",
     "classification": "PHISHING",
-    "phishing_probability": 1.0,
-    "phishing_percentage": "100.0%",
+    "phishing_probability": 0.97,
+    "phishing_percentage": "97.0%",
     "risk_level": "CRITICAL",
     "signals": [
       "[HIGH] Contains suspicious phishing keyword(s): 'verify'",
@@ -273,16 +289,18 @@
       "num_subdomains": 0,
       "has_ip": 0,
       "entropy": 3.8282,
-      "suspicious_keyword_count": 1
+      "suspicious_keyword_count": 1,
+      "brand_similarity": 100.0,
+      "brand_embedded": 1
     }
   },
   {
     "target": "http://192.168.1.105/login",
     "hostname": "192.168.1.105",
     "registered_domain": "192.168.1.105",
-    "classification": "SAFE",
-    "phishing_probability": 0.25,
-    "phishing_percentage": "25.0%",
+    "classification": "SUSPICIOUS",
+    "phishing_probability": 0.48,
+    "phishing_percentage": "48.0%",
     "risk_level": "MEDIUM",
     "signals": [
       "[CRITICAL] Uses direct IP address instead of domain name",
@@ -304,7 +322,9 @@
       "num_subdomains": 0,
       "has_ip": 1,
       "entropy": 2.7193,
-      "suspicious_keyword_count": 1
+      "suspicious_keyword_count": 1,
+      "brand_similarity": 33.3,
+      "brand_embedded": 0
     }
   }
 ]

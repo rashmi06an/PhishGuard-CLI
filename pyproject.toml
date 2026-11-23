@@ -26,6 +26,11 @@ dependencies = [
 dev = [
     "pytest>=8.0.0",
 ]
+# Optional: enables automated live screenshot capture for `compare --capture`
+# (NTRO Technique b). After install, run `playwright install chromium` once.
+capture = [
+    "playwright>=1.40.0",
+]
 
 [project.scripts]
 phishguard = "phishguard.cli:main"

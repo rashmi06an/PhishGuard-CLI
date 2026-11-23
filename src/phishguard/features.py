@@ -46,6 +46,10 @@ FEATURE_NAMES = [
     "has_ip",
     "entropy",
     "suspicious_keyword_count",
+    # NTRO point (e): closeness-to-genuine signals are now first-class ML features,
+    # so the phishing probability itself reflects how close a domain is to a real brand.
+    "brand_similarity",   # 0-100 lexical/visual closeness to the nearest genuine brand
+    "brand_embedded",     # 1 if a genuine brand name is embedded with suspicious affixes
 ]
 
 
@@ -116,6 +120,14 @@ def extract_features(target: Union[str, TargetInfo]) -> FeatureResult:
     matched_keywords = [kw for kw in SUSPICIOUS_KEYWORDS if kw in url_lower]
     suspicious_keyword_count = len(matched_keywords)
 
+    # 7. Brand closeness-to-genuine (NTRO point (e))
+    # Imported lazily to avoid any import-order coupling between modules.
+    from phishguard.similarity import analyze_brand_lookalike
+
+    brand_res = analyze_brand_lookalike(registered_domain or host_str)
+    brand_similarity = float(brand_res.similarity_score)
+    brand_embedded = 1 if brand_res.is_lookalike else 0
+
     features: Dict[str, Union[int, float]] = {
         "url_length": url_length,
         "domain_length": domain_length,
@@ -127,6 +139,8 @@ def extract_features(target: Union[str, TargetInfo]) -> FeatureResult:
         "has_ip": has_ip,
         "entropy": entropy,
         "suspicious_keyword_count": suspicious_keyword_count,
+        "brand_similarity": brand_similarity,
+        "brand_embedded": brand_embedded,
     }
 
     feature_vector = [float(features[name]) for name in FEATURE_NAMES]
